@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Hüttenkäse 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root { --cream: #FAF8F3; --border: #E5E0D5; --muted: #6B7280; --cell-empty: #EDE9E0; }
+body[data-user="pupsi"] {
+  --accent: #2D4A3E; --accent-dark: #1e3329; --accent-light: #8BAF9A;
+  --cell-low: #C8DDD4; --cell-mid: #8BAF9A; --cell-high: #2D4A3E;
+  --gold: #D4A84B; --tab-active: #2D4A3E;
+}
+body[data-user="huetti"] {
+  --accent: #7A3B4E; --accent-dark: #5c2c3b; --accent-light: #C49AAB;
+  --cell-low: #EDD5DC; --cell-mid: #C49AAB; --cell-high: #7A3B4E;
+  --gold: #C4923A; --tab-active: #7A3B4E;
+}
+body { background: var(--cream); color: var(--accent); font-family: 'Inter', sans-serif; min-height: 100vh; padding: 0 0 4rem; transition: color 0.3s; }
+
+/* Setup Banner */
+.setup-banner {
+  background: #FFF8E7;
+  border-bottom: 1.5px solid #F0D88A;
+  padding: 0.9rem 1.2rem;
+  font-size: 0.8rem;
+  color: #7A5C00;
+  text-align: center;
+  line-height: 1.5;
+}
+.setup-banner strong { font-weight: 600; }
+.setup-banner.hidden { display: none; }
+
+/* Connection status */
+.conn-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-left: auto;
+}
+.conn-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #ccc;
+  transition: background 0.3s;
+}
+.conn-dot.online { background: #4CAF50; }
+.conn-dot.offline { background: #F44336; }
+.conn-dot.loading { background: #FF9800; animation: pulse 1s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+header { max-width: 860px; margin: 0 auto; padding: 1.6rem 1.2rem 1rem; display: flex; align-items: center; gap: 1rem; border-bottom: 1.5px solid var(--accent); }
+header h1 { font-family: 'Playfair Display', serif; font-size: 1.8rem; font-weight: 700; letter-spacing: -0.02em; transition: color 0.3s; }
+header .year-badge { font-size: 0.75rem; color: var(--muted); font-weight: 300; letter-spacing: 0.1em; text-transform: uppercase; }
+.tabs { max-width: 860px; margin: 0 auto; display: flex; padding: 0 1.2rem; border-bottom: 1.5px solid var(--border); }
+.tab { padding: 0.85rem 1.4rem; font-size: 0.82rem; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; border: none; background: none; color: var(--muted); border-bottom: 2.5px solid transparent; margin-bottom: -1.5px; transition: color 0.2s, border-color 0.2s; font-family: 'Inter', sans-serif; }
+.tab.active { color: var(--tab-active); border-bottom-color: var(--tab-active); }
+.tab .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; vertical-align: middle; margin-bottom: 1px; }
+.tab[data-tab="pupsi"] .dot { background: #2D4A3E; }
+.tab[data-tab="huetti"] .dot { background: #7A3B4E; }
+
+.main { max-width: 860px; margin: 0 auto; padding: 2rem 1.2rem; display: grid; gap: 2rem; }
+.entry-card { background: white; border: 1.5px solid var(--border); border-radius: 6px; padding: 1.5rem 1.5rem 1.2rem; }
+.entry-card h2 { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 600; margin-bottom: 1.1rem; color: var(--accent); }
+.entry-row { display: flex; gap: 0.75rem; align-items: flex-end; flex-wrap: wrap; }
+.field { display: flex; flex-direction: column; gap: 0.35rem; flex: 1; min-width: 120px; }
+.field label { font-size: 0.68rem; font-weight: 500; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); }
+.field input { border: 1.5px solid var(--border); border-radius: 4px; padding: 0.6rem 0.75rem; font-family: 'Inter', sans-serif; font-size: 1rem; color: var(--accent); background: var(--cream); outline: none; width: 100%; -webkit-appearance: none; appearance: none; transition: border-color 0.15s; }
+.field input:focus { border-color: var(--accent); }
+.btn { background: var(--accent); color: white; border: none; border-radius: 4px; padding: 0.65rem 1.5rem; font-family: 'Inter', sans-serif; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: background 0.15s; white-space: nowrap; flex-shrink: 0; -webkit-tap-highlight-color: transparent; min-height: 44px; }
+.btn:hover { background: var(--accent-dark); }
+.btn:active { opacity: 0.85; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.feedback { margin-top: 0.75rem; font-size: 0.8rem; color: var(--accent-light); font-weight: 500; min-height: 1.1em; }
+
+.stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--border); border: 1.5px solid var(--border); border-radius: 6px; overflow: hidden; }
+@media(min-width: 500px) { .stats { grid-template-columns: repeat(4, 1fr); } }
+.stat { background: white; padding: 1.2rem 1.1rem; }
+.stat-value { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 700; line-height: 1; color: var(--accent); }
+.stat-value small { font-family: 'Inter', sans-serif; font-size: 0.85rem; font-weight: 400; color: var(--muted); margin-left: 2px; }
+.stat-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-top: 0.45rem; font-weight: 500; }
+
+.heatmap-section h2 { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 600; margin-bottom: 1rem; color: var(--accent); }
+.heatmap-wrap { overflow-x: auto; padding-bottom: 0.5rem; -webkit-overflow-scrolling: touch; }
+.month-labels { display: grid; grid-template-columns: 28px repeat(53, 1fr); gap: 3px; min-width: 580px; margin-bottom: 3px; }
+.month-label { font-size: 0.6rem; color: var(--muted); font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; }
+.heatmap-grid { display: grid; grid-template-columns: 28px repeat(53, 1fr); gap: 3px; min-width: 580px; }
+.heatmap-col { display: flex; flex-direction: column; gap: 3px; }
+.day-label { font-size: 0.58rem; color: var(--muted); display: flex; align-items: center; justify-content: flex-end; padding-right: 3px; }
+.day-cell { width: 100%; aspect-ratio: 1; border-radius: 2px; background: var(--cell-empty); transition: transform 0.1s; position: relative; cursor: default; }
+.day-cell:hover { transform: scale(1.35); z-index: 10; }
+.day-cell[data-level="1"] { background: var(--cell-low); }
+.day-cell[data-level="2"] { background: var(--cell-mid); }
+.day-cell[data-level="3"] { background: var(--cell-high); }
+.day-cell.today { outline: 2px solid var(--gold); outline-offset: 1px; }
+.day-cell.out-of-year, .day-cell.future { background: transparent; border: 1px dashed var(--border); }
+.legend { display: flex; align-items: center; gap: 0.45rem; margin-top: 0.75rem; font-size: 0.68rem; color: var(--muted); }
+.legend-cells { display: flex; gap: 3px; }
+.legend-cell { width: 11px; height: 11px; border-radius: 2px; }
+
+.tooltip { display: none; position: fixed; background: var(--accent); color: white; font-size: 0.7rem; padding: 0.3rem 0.6rem; border-radius: 3px; white-space: nowrap; pointer-events: none; z-index: 200; }
+
+.log-section h2 { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 600; margin-bottom: 0.85rem; color: var(--accent); }
+.log-list { display: flex; flex-direction: column; gap: 1px; background: var(--border); border: 1.5px solid var(--border); border-radius: 6px; overflow: hidden; }
+.log-item { display: flex; justify-content: space-between; align-items: center; background: white; padding: 0.7rem 1rem; gap: 0.5rem; }
+.log-date { font-size: 0.8rem; color: var(--muted); font-weight: 300; }
+.log-amount { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 600; color: var(--accent); flex: 1; text-align: right; }
+.log-amount small { font-family: 'Inter', sans-serif; font-size: 0.7rem; color: var(--muted); font-weight: 400; margin-left: 2px; }
+.log-delete { background: none; border: none; color: #ccc; cursor: pointer; font-size: 0.9rem; padding: 0.25rem 0.3rem; transition: color 0.15s; min-width: 28px; min-height: 28px; display: flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent; }
+.log-delete:hover { color: #c0392b; }
+.empty-log { padding: 1.8rem; text-align: center; color: var(--muted); font-size: 0.82rem; font-style: italic; background: white; }
+
+@media (max-width: 480px) {
+  header h1 { font-size: 1.4rem; }
+  .main { padding: 1.5rem 1rem; gap: 1.5rem; }
+  .entry-card { padding: 1.2rem 1rem 1rem; }
+  .btn { width: 100%; margin-top: 0.25rem; }
+  .entry-row { flex-direction: column; }
+  .field { min-width: unset; }
+}
+</style>
+</head>
+<body data-user="pupsi">
+
+<!-- Setup-Banner: wird ausgeblendet sobald Supabase konfiguriert ist -->
+<div class="setup-banner" id="setupBanner">
+  ⚙️ <strong>Einrichtung nötig:</strong> Trage deine Supabase-URL und deinen API-Key unten in die Datei ein (Zeilen mit DEINE_SUPABASE_URL und DEIN_ANON_KEY).
+</div>
+
+<header>
+  <h1 id="headerName">Pupsi</h1>
+  <span class="year-badge">Hüttenkäse 2026</span>
+  <div class="conn-status">
+    <div class="conn-dot loading" id="connDot"></div>
+    <span id="connText">Verbinde…</span>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab active" data-tab="pupsi" onclick="switchUser('pupsi')"><span class="dot"></span>Pupsi</button>
+  <button class="tab" data-tab="huetti" onclick="switchUser('huetti')"><span class="dot"></span>Hütti</button>
+</div>
+
+<div class="main">
+  <div class="entry-card">
+    <h2 id="entryTitle">Eintrag für Pupsi</h2>
+    <div class="entry-row">
+      <div class="field">
+        <label>Datum</label>
+        <input type="date" id="dateInput" min="2026-01-01" max="2026-12-31">
+      </div>
+      <div class="field">
+        <label>Gramm Hüttenkäse</label>
+        <input type="number" id="gramsInput" placeholder="200" min="1" max="9999" inputmode="numeric">
+      </div>
+      <button class="btn" id="submitBtn" onclick="addEntry()">Eintragen</button>
+    </div>
+    <div class="feedback" id="feedback"></div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-value" id="statTotal">0<small>g</small></div><div class="stat-label">Gesamt 2026</div></div>
+    <div class="stat"><div class="stat-value" id="statKg">0,00<small>kg</small></div><div class="stat-label">In Kilogramm</div></div>
+    <div class="stat"><div class="stat-value" id="statDays">0</div><div class="stat-label">Tage</div></div>
+    <div class="stat"><div class="stat-value" id="statAvg">—</div><div class="stat-label">Ø pro Tag</div></div>
+  </div>
+
+  <div class="heatmap-section">
+    <h2>Das Jahr im Überblick</h2>
+    <div class="heatmap-wrap">
+      <div class="month-labels" id="monthLabels"></div>
+      <div class="heatmap-grid" id="heatmapGrid"></div>
+    </div>
+    <div class="legend">
+      Weniger
+      <div class="legend-cells">
+        <div class="legend-cell" style="background:var(--cell-empty)"></div>
+        <div class="legend-cell" style="background:var(--cell-low)"></div>
+        <div class="legend-cell" style="background:var(--cell-mid)"></div>
+        <div class="legend-cell" style="background:var(--cell-high)"></div>
+      </div>
+      Mehr
+    </div>
+  </div>
+
+  <div class="log-section">
+    <h2>Letzte Einträge</h2>
+    <div class="log-list" id="logList"></div>
+  </div>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+// ════════════════════════════════════════════════
+//  HIER DEINE SUPABASE-ZUGANGSDATEN EINTRAGEN:
+// ════════════════════════════════════════════════
+const SUPABASE_URL = 'https://uzusujepvhiyasstgrzr.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_o88bst5grokv5XUtls5EaA_JLOOPw3k';
+// ════════════════════════════════════════════════
+
+const USERS = {
+  pupsi:  { name: 'Pupsi',  id: 'pupsi'  },
+  huetti: { name: 'Hütti',  id: 'huetti' }
+};
+
+let currentUser = 'pupsi';
+let datasets = { pupsi: {}, huetti: {} };
+let isConnected = false;
+
+const isConfigured = () => !SUPABASE_URL.includes('DEINE') && !SUPABASE_KEY.includes('DEIN_');
+
+// ── Supabase API helpers ──
+async function sbFetch(path, options = {}) {
+  const res = await fetch(SUPABASE_URL + path, {
+    ...options,
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation',
+      ...(options.headers || {})
+    }
+  });
+  if (!res.ok) throw new Error(await res.text());
+  const text = await res.text();
+  return text ? JSON.parse(text) : [];
+}
+
+async function loadFromSupabase() {
+  const rows = await sbFetch('/rest/v1/eintraege?select=*&year=eq.2026');
+  datasets = { pupsi: {}, huetti: {} };
+  for (const row of rows) {
+    if (datasets[row.user_id] !== undefined) {
+      datasets[row.user_id][row.date] = row.grams;
+    }
+  }
+}
+
+async function upsertEntry(userId, date, grams) {
+  await sbFetch('/rest/v1/eintraege', {
+    method: 'POST',
+    headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
+    body: JSON.stringify({ user_id: userId, date, grams, year: 2026 })
+  });
+}
+
+async function deleteFromSupabase(userId, date) {
+  await sbFetch(`/rest/v1/eintraege?user_id=eq.${userId}&date=eq.${date}`, { method: 'DELETE' });
+}
+
+// ── Verbindung ──
+function setConnStatus(state) {
+  const dot = document.getElementById('connDot');
+  const txt = document.getElementById('connText');
+  dot.className = 'conn-dot ' + state;
+  if (state === 'online')  { txt.textContent = 'Verbunden'; isConnected = true; }
+  if (state === 'offline') { txt.textContent = 'Offline'; isConnected = false; }
+  if (state === 'loading') { txt.textContent = 'Lädt…'; }
+}
+
+async function initConnection() {
+  if (!isConfigured()) {
+    document.getElementById('setupBanner').classList.remove('hidden');
+    setConnStatus('offline');
+    loadFromLocalStorage();
+    render();
+    return;
+  }
+  document.getElementById('setupBanner').classList.add('hidden');
+  setConnStatus('loading');
+  try {
+    await loadFromSupabase();
+    setConnStatus('online');
+    render();
+    // Alle 30 Sekunden neu laden (damit Hüttis Einträge erscheinen)
+    setInterval(async () => {
+      try { await loadFromSupabase(); render(); } catch {}
+    }, 30000);
+  } catch(e) {
+    console.error(e);
+    setConnStatus('offline');
+    loadFromLocalStorage();
+    render();
+  }
+}
+
+// ── localStorage Fallback ──
+function loadFromLocalStorage() {
+  for (const uid of Object.keys(USERS)) {
+    try {
+      const raw = localStorage.getItem('hk2026-' + uid);
+      datasets[uid] = raw ? JSON.parse(raw) : {};
+    } catch { datasets[uid] = {}; }
+  }
+}
+function saveToLocalStorage() {
+  try { localStorage.setItem('hk2026-' + currentUser, JSON.stringify(datasets[currentUser])); } catch {}
+}
+
+// ── Tab switch ──
+function switchUser(uid) {
+  currentUser = uid;
+  document.body.setAttribute('data-user', uid);
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === uid));
+  document.getElementById('headerName').textContent = USERS[uid].name;
+  document.getElementById('entryTitle').textContent = 'Eintrag für ' + USERS[uid].name;
+  document.getElementById('feedback').textContent = '';
+  render();
+}
+
+// ── Date helpers ──
+function pad(n) { return String(n).padStart(2,'0'); }
+function getTodayStr() {
+  const t = new Date();
+  if (t.getFullYear() !== 2026) return null;
+  return '2026-' + pad(t.getMonth()+1) + '-' + pad(t.getDate());
+}
+function formatDate(str) {
+  const [,m,d] = str.split('-');
+  return d + '.' + m + '.2026';
+}
+function initDate() {
+  const t = new Date(); const y = t.getFullYear();
+  const v = y === 2026 ? '2026-' + pad(t.getMonth()+1) + '-' + pad(t.getDate()) : y > 2026 ? '2026-12-31' : '2026-01-01';
+  document.getElementById('dateInput').value = v;
+}
+
+// ── Add entry ──
+async function addEntry() {
+  const dateVal = document.getElementById('dateInput').value;
+  const gramsVal = parseInt(document.getElementById('gramsInput').value);
+  const fb = document.getElementById('feedback');
+  const btn = document.getElementById('submitBtn');
+
+  if (!dateVal || !dateVal.startsWith('2026')) {
+    fb.style.color = '#c0392b'; fb.textContent = 'Bitte ein Datum im Jahr 2026 wählen.'; return;
+  }
+  if (!gramsVal || gramsVal < 1) {
+    fb.style.color = '#c0392b'; fb.textContent = 'Bitte eine Grammzahl eingeben.'; return;
+  }
+
+  const newGrams = (datasets[currentUser][dateVal] || 0) + gramsVal;
+  datasets[currentUser][dateVal] = newGrams;
+  btn.disabled = true;
+  fb.style.color = 'var(--accent-light)';
+  fb.textContent = 'Wird gespeichert…';
+
+  try {
+    if (isConnected) {
+      await upsertEntry(currentUser, dateVal, newGrams);
+      fb.textContent = '+' + gramsVal + ' g am ' + formatDate(dateVal) + ' gespeichert ✓';
+    } else {
+      saveToLocalStorage();
+      fb.textContent = '+' + gramsVal + ' g am ' + formatDate(dateVal) + ' lokal gespeichert.';
+    }
+  } catch(e) {
+    fb.style.color = '#c0392b';
+    fb.textContent = 'Fehler beim Speichern. Lokal gespeichert.';
+    saveToLocalStorage();
+  }
+
+  btn.disabled = false;
+  document.getElementById('gramsInput').value = '';
+  render();
+  setTimeout(() => { fb.textContent = ''; }, 4000);
+}
+
+async function deleteEntry(dateStr) {
+  delete datasets[currentUser][dateStr];
+  try {
+    if (isConnected) await deleteFromSupabase(currentUser, dateStr);
+    else saveToLocalStorage();
+  } catch { saveToLocalStorage(); }
+  render();
+}
+
+// ── Level ──
+function getLevel(g) {
+  if (!g) return 0;
+  if (g < 150) return 1;
+  if (g < 400) return 2;
+  return 3;
+}
+
+// ── Render ──
+function render() { renderStats(); renderHeatmap(); renderLog(); }
+
+function renderStats() {
+  const vals = Object.values(datasets[currentUser]);
+  const total = vals.reduce((a,b) => a+b, 0);
+  const days = vals.length;
+  const avg = days > 0 ? Math.round(total / days) : null;
+  document.getElementById('statTotal').innerHTML = total.toLocaleString('de') + '<small>g</small>';
+  document.getElementById('statKg').innerHTML = (total/1000).toFixed(2).replace('.',',') + '<small>kg</small>';
+  document.getElementById('statDays').textContent = days;
+  document.getElementById('statAvg').innerHTML = avg ? avg + '<small>g</small>' : '—';
+}
+
+function renderHeatmap() {
+  const grid = document.getElementById('heatmapGrid');
+  const mlEl = document.getElementById('monthLabels');
+  grid.innerHTML = ''; mlEl.innerHTML = '';
+  const todayStr = getTodayStr();
+  const today = new Date();
+  const jan1 = new Date(2026, 0, 1);
+  const dow = jan1.getDay();
+  const off = dow === 0 ? -6 : -(dow - 1);
+  const firstMonday = new Date(jan1);
+  firstMonday.setDate(jan1.getDate() + off);
+  const MONTHS = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+  const DAYS = ['Mo','Di','Mi','Do','Fr','Sa','So'];
+
+  const labelCol = document.createElement('div');
+  labelCol.className = 'heatmap-col';
+  for (let d = 0; d < 7; d++) {
+    const lbl = document.createElement('div');
+    lbl.className = 'day-label';
+    lbl.textContent = d % 2 === 0 ? DAYS[d] : '';
+    labelCol.appendChild(lbl);
+  }
+  grid.appendChild(labelCol);
+  mlEl.appendChild(document.createElement('div'));
+
+  let lastMonth = -1;
+  for (let w = 0; w < 53; w++) {
+    const weekStart = new Date(firstMonday);
+    weekStart.setDate(firstMonday.getDate() + w * 7);
+    const ml = document.createElement('div');
+    ml.className = 'month-label';
+    const wm = weekStart.getMonth();
+    if (wm !== lastMonth && weekStart.getFullYear() === 2026) { ml.textContent = MONTHS[wm]; lastMonth = wm; }
+    mlEl.appendChild(ml);
+
+    const col = document.createElement('div');
+    col.className = 'heatmap-col';
+    for (let d = 0; d < 7; d++) {
+      const cd = new Date(firstMonday);
+      cd.setDate(firstMonday.getDate() + w * 7 + d);
+      const cell = document.createElement('div');
+      cell.className = 'day-cell';
+      if (cd.getFullYear() !== 2026) { cell.classList.add('out-of-year'); col.appendChild(cell); continue; }
+      if (cd > today) { cell.classList.add('future'); col.appendChild(cell); continue; }
+      const ds = '2026-' + pad(cd.getMonth()+1) + '-' + pad(cd.getDate());
+      const grams = datasets[currentUser][ds];
+      const level = getLevel(grams);
+      if (level > 0) cell.setAttribute('data-level', level);
+      if (ds === todayStr) cell.classList.add('today');
+      cell.addEventListener('mouseenter', () => {
+        const tip = document.getElementById('tooltip');
+        tip.textContent = grams ? formatDate(ds) + ' · ' + grams + ' g' : formatDate(ds) + ' · kein Eintrag';
+        tip.style.display = 'block';
+      });
+      cell.addEventListener('mousemove', e => {
+        const tip = document.getElementById('tooltip');
+        tip.style.left = (e.clientX + 12) + 'px';
+        tip.style.top = (e.clientY - 30) + 'px';
+      });
+      cell.addEventListener('mouseleave', () => { document.getElementById('tooltip').style.display = 'none'; });
+      col.appendChild(cell);
+    }
+    grid.appendChild(col);
+  }
+}
+
+function renderLog() {
+  const list = document.getElementById('logList');
+  const entries = Object.entries(datasets[currentUser]).sort((a,b) => b[0].localeCompare(a[0])).slice(0, 15);
+  if (!entries.length) {
+    list.innerHTML = '<div class="empty-log">Noch keine Einträge für ' + USERS[currentUser].name + '.</div>';
+    return;
+  }
+  list.innerHTML = entries.map(([date, grams]) =>
+    '<div class="log-item">' +
+    '<span class="log-date">' + formatDate(date) + '</span>' +
+    '<span class="log-amount">' + grams.toLocaleString('de') + '<small>g</small></span>' +
+    '<button class="log-delete" onclick="deleteEntry(\'' + date + '\')" title="Löschen">✕</button>' +
+    '</div>'
+  ).join('');
+}
+
+document.getElementById('gramsInput').addEventListener('keydown', e => { if (e.key === 'Enter') addEntry(); });
+
+initDate();
+initConnection();
+</script>
+</body>
+</html>
